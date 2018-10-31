@@ -1,0 +1,16 @@
+{
+  "name": "reference-integration-rest-api-yandex",
+  "version": "1.0.0",
+  "description": "Reference integration of rest api yandex",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "Switch S.A.",
+  "license": "MIT",
+  "dependencies": {
+    "express": "4.16.4",
+    "axios": "0.18.0",
+    "ngrok": "3.1.0"
+  }
+}
