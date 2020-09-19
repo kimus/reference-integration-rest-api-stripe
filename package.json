@@ -1,7 +1,7 @@
 {
-  "name": "reference-integration-rest-api-yandex",
+  "name": "reference-integration-rest-api-stripe",
   "version": "1.0.0",
-  "description": "Reference integration of rest api yandex",
+  "description": "Reference integration of rest api stripe",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
@@ -9,8 +9,9 @@
   "author": "Switch S.A.",
   "license": "MIT",
   "dependencies": {
+    "axios": "0.19.0",
+    "dotenv": "^8.2.0",
     "express": "4.16.4",
-    "axios": "0.18.0",
-    "ngrok": "3.1.0"
+    "ngrok": "3.2.5"
   }
 }

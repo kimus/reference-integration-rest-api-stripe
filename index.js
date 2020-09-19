@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 // Imports
 const express = require('express');
 const axios = require('axios');
@@ -17,9 +19,9 @@ app.use(function (req, res, next) {
 
 // Switch credentials (available in Switch Dashboard)
 const switchKeys = {
-    accountId: '',
-    privateKey: '',
-    publicKey: ''
+    accountId: process.env.SWITCH_ACCOUNT_ID,
+    privateKey: process.env.SWITCH_PRIVATE_KEY,
+    publicKey: process.env.SWITCH_PUBLIC_KEY
 };
 
 // Switch URL
@@ -68,7 +70,7 @@ app.post('/order', (req, res) => {
 
     // Body of the POST request
     let body = {
-        charge_type: 'yandex',
+        charge_type: 'card_onetime',
         amount: amount,
         currency: product.currency,
         events_url: configPath.url + '/events',
@@ -84,9 +86,14 @@ app.post('/order', (req, res) => {
         }
     };
 
+    let buff = Buffer.from(switchKeys.publicKey + ':');
+    var auth = buff.toString('base64');
+
     // Makes a POST request to the Switch API to create a charge
     axios.post(switchUrl + 'charges', body, config)
-        .then((response) => res.send(`
+        .then((response) => {
+            console.log(response.data);
+            return res.send(`
             <html>
                 <p>PAYMENT</p>
                 <button onclick="submitForm()">
@@ -98,26 +105,36 @@ app.post('/order', (req, res) => {
                         fetch('${switchUrl}' + 'instruments', {
                             method: 'POST',
                             headers: {
-                                'Authorization': 'Basic ' + btoa('${switchKeys.publicKey}' + ':'),
+                                'Authorization': 'Basic ${auth}',
                                 'Content-Type': 'application/json'
                             },
-                            body: JSON.stringify({'charge': '${response.data.id}'})
+                            body: JSON.stringify({
+                                'charge': '${response.data.id}',
+                                'name': 'John Doe',
+                                'number': '4111111111111111',
+                                'expiration_month': 12,
+                                'expiration_year': 2030,
+                                'cvc': '007'
+                            })
                         })
-                            .then((res) => res.json())
+                            .then((res) => {
+                                if (res.ok) return res.json();
+                                throw new Error(res.statusText);
+                            })
                             .then((data) => {
-                                if (data.redirect.url){
+                                documen.write('redirecting...');
+                                if (data && data.redirect && data.redirect.url){
                                     // Redirect to the URL
                                     window.location = data.redirect.url;
                                 }
+                                window.location = '/redirect?instrumentId=' + data.id;
                             })
-                            .catch((error) => console.log(error));
+                            .catch((error) => document.write(error.message + '. Please <a href="/">ty again</a>.'));
                     };
                 </script>
             </html>
-        `))
-        .catch((error) => {
-            console.log(error.response.data)
-        });
+        `)})
+        .catch((error) => res.send(error.response.data));
 });
 
 /**
@@ -146,7 +163,7 @@ app.post('/events', (req, res) => {
                 // Marks the order as authorized
                 order.authorized = true;
             })
-            .catch((error) => console.log(error));
+            .catch((error) => res.send(error.response.data));
     }
     res.end();
 });
@@ -181,9 +198,7 @@ app.get('/redirect', (req, res) => {
                 `);
             }
         })
-        .catch(() => {
-            res.end();
-        });
+        .catch((err) => res.send(err));
 });
 
 /**
@@ -196,8 +211,10 @@ app.get('/orders', (req, res) => {
 
 // Create a network tunnel to allow Switch API to communicate with the local service
 (async function (app, configPath) {
-    configPath.url = await ngrok.connect(configPath.port);
+    configPath.url = await ngrok.connect(configPath.port)
+        .catch(err => console.log(err));
     app.listen(configPath.port);
+    console.log(`Server running on ${configPath.url ? configPath.url : 'UNAVAILABLE'} local on port ${configPath.port}...`);
 })(app, configPath);
 
 
@@ -205,12 +222,12 @@ app.get('/orders', (req, res) => {
 let DB = {
     products: [{
         id: 'sku42',
-        name: 'Leather Jacket',
-        price: 550,
-        currency: 'RUB'
+        name: 'Meal',
+        price: 5.50,
+        currency: 'EUR'
     }],
     orders: [{
-        itemId: 'sku42',
+        itemId: 'sku43',
         quantity: 2,
         amount: 1100,
         currency: 'EUR',
