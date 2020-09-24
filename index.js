@@ -122,7 +122,7 @@ app.post('/order', (req, res) => {
                                 throw new Error(res.statusText);
                             })
                             .then((data) => {
-                                documen.write('redirecting...');
+                                document.write('redirecting...');
                                 if (data && data.redirect && data.redirect.url){
                                     // Redirect to the URL
                                     window.location = data.redirect.url;
